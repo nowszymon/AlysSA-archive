@@ -3,7 +3,13 @@ import pandas as pd
 """
 NextDayReturn(Data, DataColumn, PreviousDay, MoreLess='More', Days=1): Calculate the day return on the day after daily return of PreviousDay value occured.
 BarsInaRow(Data, DataColumn): How many times there was a X number of down/up candles in a row.
+SeasonalityPattern(DataFrame, Column): Plot chart of seasonality pattern with the actual year data. Always delete automatically first year.
 """
+
+def ColumnWithYears(DataFrame, Column):
+	for i in range(0,len(DataFrame)):
+		DataFrame.loc[i,'Year'] = DataFrame.loc[i, Column].year
+	return DataFrame
 
 def PercentageChange(dataframe, column, change):
 	"""
@@ -84,3 +90,33 @@ def BarsInaRow(Data, DataColumn):
 	print(final['UP'].value_counts().sort_index())
 	print()
 	print(res.plot(kind="bar", figsize=(10,7), legend=False, title='Number of downward(-)/upward(+) candles in a row'))
+	
+def SeasonalityPattern(DataFrame, Column):
+	"""
+	Plot chart of seasonality pattern with the actual year data. Always delete automatically first year.
+	
+	DataFrame: Pandas DataFrame, Column: Column with data
+	"""
+	
+	values = ColumnWithYears(DataFrame, 'Date')
+	
+	listofyears = DataFrame['Year'].unique()
+	listofyears = listofyears[1:]
+	
+	final = pd.DataFrame()
+	for i in listofyears:
+		oneyear = pd.DataFrame(DataFrame[DataFrame['Year']==i][Column])
+		oneyear.reset_index(inplace=True,drop=True)
+		final[i] = oneyear
+	
+	path = pd.DataFrame()
+	for i in listofyears:
+		for x in range(0,len(final)):
+			path.loc[x,i] = final.loc[x,i]/final.loc[0,i]*100
+			
+	plotdata = pd.DataFrame()
+	for i in range(0,len(path)):
+		plotdata.loc[i,'Projection'] = path.iloc[i,:-1].mean()					
+	plotdata[listofyears[-1]] = path[listofyears[-1]]
+		
+	plotdata.plot(figsize=(10,7), title='Seasonality Pattern Projection (r = {}%)'.format(round(plotdata.corr().iloc[0,1]*100)))
