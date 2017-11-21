@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
 
 """
@@ -196,15 +197,16 @@ def SeasonalityPattern(DataFrame, Column):
 	path = pd.DataFrame()
 	for i in listofyears:
 		for x in range(0,len(final)):
-			path.loc[x,i] = final.loc[x,i]/final.loc[0,i]*100
+			path.loc[x,i] = final.loc[x,i]/final.loc[0,i]-1
 			
 	plotdata = pd.DataFrame()
 	for i in range(0,len(path)):
 		plotdata.loc[i,'Projection'] = path.iloc[i,:-1].mean()					
 	plotdata[listofyears[-1]] = path[listofyears[-1]]
 	
+
 	anchored_text = AnchoredText('                AlysSA v0.1b\n  Algorithmic Statistical Analysis\nSzymon Nowak (www.1do1.biz.pl)', loc=4)	
-	ax = plotdata.plot(figsize=(10,7), title='Seasonality Pattern Projection (r = {}%)'.format(round(plotdata.corr().iloc[0,1]*100)))
+	ax = plotdata.plot(y=['Projection',listofyears[-1]], secondary_y=['Projection'],figsize=(10,7), title='Seasonality Pattern Projection (r = {}%)'.format(round(plotdata.corr().iloc[0,1]*100)))
 	ax.add_artist(anchored_text)
 	
 def SeasonalityDaily(DataFrame, Column):
