@@ -2,7 +2,7 @@ import pandas as pd
 from matplotlib.offsetbox import AnchoredText
 
 """
-AlysSA v0.1b
+AlysSA v0.11b
 
 NextDayReturn(Data, DataColumn, PreviousDay, MoreLess='More', Days=1): Calculate the day return on the day after daily return of PreviousDay value occured.
 BarsInaRow(Data, DataColumn): How many times there was a X number of down/up candles in a row.
@@ -10,9 +10,10 @@ SeasonalityPattern(DataFrame, Column): Plot chart of seasonality pattern with th
 MonthsofExceededMove(DataFrame, Column, Window, Level, MoreLess='Less'): Calculate number of months when symbol exceeded Level move in Window days.
 DownloadFromStooq(Symbol, Interval, Open=False, High=False, Low=False, Close=True, Volume=False): Download data from stooq.plot
 SeasonalityDaily(DataFrame, Column): Calculate mean of daily returns and percentage of days with plus/minus daily returns.
+Rebase(DataFrame): Calucalte percent changes to the first value in a column.
 """
 
-anchored_text = AnchoredText('                AlysSA v0.1b\n  Algorithmic Statistical Analysis\nSzymon Nowak (www.1do1.biz.pl)', loc=4)
+
 
 def ExtractWeekDay(DataFrame, Column):
 	for i in range(0,len(DataFrame)):
@@ -70,8 +71,6 @@ def RenameMonths(DataFrame):
 	DataFrame.rename(index={1.0:'January', 2.0:'February', 3.0:'March', 4.0:'April', 5.0:'May',6.0:'June',7.0:'July',8.0:'August',9.0:'September', 10.0:'October',11.0:'November',12.0:'December'}, inplace=True)
 	return DataFrame
 	
-
-
 def DownloadFromStooq(Symbol, Interval, Open=False, High=False, Low=False, Close=True, Volume=False):
 	"""
 	Download data from stooq.plot
@@ -166,10 +165,15 @@ def BarsInaRow(Data, DataColumn):
 	final = final.append(resultsDOWN)
 	res = pd.DataFrame(final['UP'].value_counts())
 	res.sort_index(inplace=True)
-	
+
+	anchored_text = AnchoredText('                AlysSA v0.1b\n  Algorithmic\'n\'Statistical Analysis\nSzymon Nowak (www.1do1.biz.pl)', loc=1)
+		
 	print(final['UP'].value_counts().sort_index())
 	print()
-	print(res.plot(kind="bar", figsize=(10,7), legend=False, title='Number of downward(-)/upward(+) candles in a row'))
+
+	ax = res.plot(kind="bar", figsize=(12,8), rot=45, legend=False, title='Number of downward(-)/upward(+) candles in a row')
+	ax.title.set_size(20)
+	ax.add_artist(anchored_text)
 	
 def SeasonalityPattern(DataFrame, Column):
 	"""
@@ -199,11 +203,10 @@ def SeasonalityPattern(DataFrame, Column):
 		plotdata.loc[i,'Projection'] = path.iloc[i,:-1].mean()					
 	plotdata[listofyears[-1]] = path[listofyears[-1]]
 	
-	
+	anchored_text = AnchoredText('                AlysSA v0.1b\n  Algorithmic Statistical Analysis\nSzymon Nowak (www.1do1.biz.pl)', loc=4)	
 	ax = plotdata.plot(figsize=(10,7), title='Seasonality Pattern Projection (r = {}%)'.format(round(plotdata.corr().iloc[0,1]*100)))
 	ax.add_artist(anchored_text)
 	
-
 def SeasonalityDaily(DataFrame, Column):
 	"""
 	Calculate mean of daily returns and percentage of days with plus/minus daily returns.
@@ -250,4 +253,11 @@ def MonthsofExceededMove(DataFrame, Column, Window, Level, MoreLess='Less'):
 		final = DataFrame[DataFrame['PCT']>Level].groupby('Month').count()[Column]
 	RenameMonths(final)
 	final.plot(kind='bar',figsize=(10, 7), rot=45, legend=False, title='Number of months when {} was down more than {}% in {} days. '.format(Column, Level*100, Window))
+	
+def Rebase(DataFrame):
+	"""
+	Calucalte percent changes to the first value in a column.
+	"""
+	
+	return(DataFrame.apply(lambda x: x.div(x.iloc[0]).subtract(1).mul(100)))
 	
