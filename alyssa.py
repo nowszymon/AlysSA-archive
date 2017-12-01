@@ -12,6 +12,8 @@ MonthsofExceededMove(DataFrame, Column, Window, Level, MoreLess='Less'): Calcula
 DownloadFromStooq(Symbol, Interval, Open=False, High=False, Low=False, Close=True, Volume=False): Download data from stooq.plot
 SeasonalityDaily(DataFrame, Column): Calculate mean of daily returns and percentage of days with plus/minus daily returns.
 Rebase(DataFrame): Calucalte percent changes to the first value in a column.
+Fed_rates(): Load pickled df with details of FED funds rates 
+Plot_X_values_on_Y_dates(df, Column, Dates, fred_api, Range_start=-20, Range_end=60,Title='',PlotAll=False): Plot min and max boundaries for the average price action on selected days.	
 """
 
 
@@ -72,13 +74,21 @@ def RenameMonths(DataFrame):
 	DataFrame.rename(index={1.0:'January', 2.0:'February', 3.0:'March', 4.0:'April', 5.0:'May',6.0:'June',7.0:'July',8.0:'August',9.0:'September', 10.0:'October',11.0:'November',12.0:'December'}, inplace=True)
 	return DataFrame
 	
-def DownloadFromStooq(Symbol, Interval, Open=False, High=False, Low=False, Close=True, Volume=False):
+def DownloadFromStooq(Symbol, Interval, Part = False, Date_from = '2000-01-01', Date_to = '2001-01-01', Open=False, High=False, Low=False, Close=True, Volume=False):
 	"""
 	Download data from stooq.plot
 	"""
 	
 	import datetime
-	url = 'http://stooq.com/q/d/l/?s={}&i={}'.format(Symbol,Interval)
+	
+	Date_f = Date_from.replace('-','')
+	Date_t = Date_to.replace('-','')
+	
+	if Part == False:
+		url = 'http://stooq.com/q/d/l/?s={}&i={}'.format(Symbol,Interval)
+	else:
+		url = 'http://stooq.com/q/d/l/?s={}&d1={}&d2={}&i=d'.format(Symbol,Date_f,Date_t)
+
 	data = pd.read_csv(url)
 	
 	data['Date'] = data['Date'].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
@@ -91,9 +101,9 @@ def DownloadFromStooq(Symbol, Interval, Open=False, High=False, Low=False, Close
 		del data['Low']
 	if Close == False:
 		del data['Close']
-	if Volume == False:
+	if (('Volume' in data.columns) & (Volume == False)) :
 		del data['Volume']
-	
+		
 	data.rename(columns={'Close':Symbol}, inplace=True)
 	
 	return data
@@ -167,7 +177,7 @@ def BarsInaRow(Data, DataColumn):
 	res = pd.DataFrame(final['UP'].value_counts())
 	res.sort_index(inplace=True)
 
-	anchored_text = AnchoredText('                AlysSA v0.1b\n  Algorithmic\'n\'Statistical Analysis\nSzymon Nowak (www.1do1.biz.pl)', loc=1)
+	anchored_text = AnchoredText('                AlysSA v0.11b\n  Algorithmic\'n\'Statistical Analysis\nSzymon Nowak (www.1do1.biz.pl)', loc=1)
 		
 	print(final['UP'].value_counts().sort_index())
 	print()
@@ -205,8 +215,8 @@ def SeasonalityPattern(DataFrame, Column):
 	plotdata[listofyears[-1]] = path[listofyears[-1]]
 	
 
-	anchored_text = AnchoredText('                AlysSA v0.1b\n  Algorithmic Statistical Analysis\nSzymon Nowak (www.1do1.biz.pl)', loc=4)	
-	ax = plotdata.plot(y=['Projection',listofyears[-1]], secondary_y=['Projection'],figsize=(10,7), title='Seasonality Pattern Projection (r = {}%)'.format(round(plotdata.corr().iloc[0,1]*100)))
+	anchored_text = AnchoredText('                AlysSA v0.11b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=4)	
+	ax = plotdata.plot(y=['Projection',listofyears[-1]], secondary_y=['Projection'],figsize=(12,8), title='Seasonality Pattern Projection (r = {}%)'.format(round(plotdata.corr().iloc[0,1]*100)))
 	ax.add_artist(anchored_text)
 	
 def SeasonalityDaily(DataFrame, Column):
@@ -263,3 +273,83 @@ def Rebase(DataFrame):
 	
 	return(DataFrame.apply(lambda x: x.div(x.iloc[0]).subtract(1).mul(100)))
 	
+def Fed_rates():
+
+	import pickle
+	
+	infile = open('data/fed_rates','rb')
+	data = pickle.load(infile)
+	infile.close()
+	return(data)
+	
+def Plot_X_values_on_Y_dates(df, Column, Dates, fred_api, Range_start=-20, Range_end=60,Title='',PlotAll=False):
+	
+	"""
+	Plot min and max boundaries for the average price action on selected days.
+	
+	df: pandas DataFrame with values,Column: column in df with values, Dates: pandas DataFrame with dates, fred_api = api key for Fred
+	"""
+	
+	from fredapi import Fred
+	import pylab as plt
+	
+	df.reset_index(inplace=True)
+	
+	indexes = []
+	for i in Dates:
+		index = df[df['Date']==i]['index']
+		indexes.extend(index)
+		
+	dates_pd = pd.DataFrame(Dates)
+	dates_pd.reset_index(inplace=True)
+	
+	final = pd.DataFrame()
+	for i in range(len(dates_pd)):
+		for x in range(Range_start,Range_end):
+			final.loc[x,i] = df.loc[indexes[i]+x][Column]
+			
+	for date in final:
+		for i in range(len(final)):
+			if i == abs(Range_start):
+				continue
+			#base = final.iloc[abs(Range_start),date]
+			final.iloc[i,date] = (final.iloc[i,date]/final.iloc[abs(Range_start),date]-1)*100		
+	
+	for date in final:
+		final.iloc[abs(Range_start),date] = 0	
+	
+	final = final.rename(columns=(lambda x:Dates[x]))	
+	
+	final['average'] = ''
+	for i in range(len(final)):
+		final.iloc[i,-1] = final.iloc[i,:-1].mean()
+
+	final['min'] = ''
+	for i in range(len(final)):
+		final.iloc[i,-1] = final.iloc[i,:-1].min()
+    
+	final['max'] = ''
+	for i in range(len(final)):
+		final.iloc[i,-1] = final.iloc[i,:-1].max()
+		
+	final['average'] = pd.to_numeric(final['average'])
+	final['min'] = pd.to_numeric(final['min'])
+	final['max'] = pd.to_numeric(final['max'])	
+	final['zero'] = '0'
+	final['zero'] = pd.to_numeric(final['zero'])
+	
+	if PlotAll == False:
+		anchored_text = AnchoredText('                AlysSA v0.11b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=4)	
+		ax = final.plot(y=['min'],figsize=(12,8), label='min',color='Red',title=Title)
+		final['max'].plot(ax=ax,label='max',color='Green')
+		final['average'].plot(ax=ax,label='average', linewidth=3)
+		final['zero'].plot(ax=ax,color='Black',linestyle='dashed',linewidth=1,label='')
+		ax.set_xlabel('Days')
+		ax.set_ylabel('[%]')
+		# ax1 = ax.twinx()
+		# ax1.set_ylim(ax.get_ylim())
+		plt.legend()
+		ax.fill_between(final.index,final['max'],final['min'],alpha=0.3,color='Pink')
+		ax.add_artist(anchored_text)
+	else:
+		final.plot(figsize=(12,8),legend=False)
