@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
 
 """
-AlysSA v0.14b
+AlysSA v0.15b
 
 NextDayReturn(Data, DataColumn, PreviousDay, MoreLess='More', Days=1): Calculate the day return on the day after daily return of PreviousDay value occured.
 BarsInaRow(Data, DataColumn): How many times there was a X number of down/up candles in a row.
@@ -20,7 +20,8 @@ CorrelationChart(df,col1,col2,window=20, CorrPrices=False):	Price/regression/cor
 SpreadChart(df,col1,col2): Spread chart.
 WordCloud(text,title='',language = 'English', additional_words=[''], UseStopwords = True): WordCloud from the text.
 CurrencyVsYieldSpreads(start_date='2015-01-01', symbol='all'): Major currencies vs. 10y yields spread.
-def NYSEMargin(): Plots NYSE Investor credit balances and SP500.
+NYSEMargin(): Plots NYSE Investor credit balances and SP500.
+MargaRET(df, Column, Cut_off_date):	MargaRET predicts future values based on correlation of actual quotes with historical ones.
 """
 
 
@@ -184,7 +185,7 @@ def BarsInaRow(Data, DataColumn):
 	res = pd.DataFrame(final['UP'].value_counts())
 	res.sort_index(inplace=True)
 
-	anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\nSzymon Nowak (www.1do1.biz.pl)', loc=1)
+	anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\nSzymon Nowak (www.1do1.biz.pl)', loc=1)
 		
 	print(final['UP'].value_counts().sort_index())
 	print()
@@ -223,7 +224,7 @@ def SeasonalityPattern(DataFrame, Column, title=''):
 	
 	plotdata = plotdata[:-5]
 
-	anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=4)	
+	anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=4)	
 	ax = plotdata.plot(y=['Projection',listofyears[-1]], secondary_y=['Projection'],figsize=(12,8), title='Seasonality Pattern Projection ({} r = {}%)'.format(title,round(plotdata.corr().iloc[0,1]*100)))
 	ax.set_xlabel('Days')
 	ax.add_artist(anchored_text)
@@ -348,7 +349,7 @@ def Plot_X_values_on_Y_dates(df, Column, Dates, fred_api, Range_start=-20, Range
 	final['zero'] = pd.to_numeric(final['zero'])
 	
 	if PlotAll == False:
-		anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=4)	
+		anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=4)	
 		ax = final.plot(y=['min'],figsize=(12,8), label='min',color='Red',title=Title)
 		final['max'].plot(ax=ax,label='max',color='Green')
 		final['average'].plot(ax=ax,label='average', linewidth=3)
@@ -361,7 +362,7 @@ def Plot_X_values_on_Y_dates(df, Column, Dates, fred_api, Range_start=-20, Range
 		ax.fill_between(final.index,final['max'],final['min'],alpha=0.3,color='Pink')
 		ax.add_artist(anchored_text)
 	else:
-		anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=4)
+		anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=4)
 		ax = final.plot(figsize=(12,8),legend=False, title=Title)
 		ax.set_xlabel('Days')
 		ax.set_ylabel('[%]')
@@ -462,7 +463,7 @@ def CorrelationChart(df,col1,col2,window=20, CorrPrices=False):
 	ax2.fill_between(pct.index.values, 0, pct['corr'], where=pct['corr']>0, interpolate=True, color='green')
 	ax2.fill_between(pct.index.values, 0, pct['corr'], where=pct['corr']<0, interpolate=True, color='red')
 
-	anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+	anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 	ax1.add_artist(anchored_text)
 	
 	if CorrPrices==False:
@@ -506,7 +507,7 @@ def SpreadChart(df,col1,col2):
 	ax2.fill_between(df.index.values,0,df['spread'],where=df['spread']<0,interpolate=True,color=sns.xkcd_rgb["medium green"], alpha=0.7)
 
 	
-	anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+	anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 	ax1.add_artist(anchored_text)
 
 def WordCloud(text,title='',language = 'English', additional_words=[''], UseStopwords = True):
@@ -803,7 +804,6 @@ def CurrencyVsYieldSpreads(start_date='2015-01-01', symbol='all'):
 		fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 		plt.annotate('by Szymon Nowak (www.szymonnowak.com)', (0,0), (250,-30), xycoords='axes fraction', textcoords='offset points', va='top')
 
-		plt.savefig('output.png', dpi=600, bbox_inches='tight')
 		
 	else:
 	
@@ -816,7 +816,7 @@ def CurrencyVsYieldSpreads(start_date='2015-01-01', symbol='all'):
 			ax2.plot(eurusd['spread'],label='Spread',color='red')
 			ax2.legend()
 			ax.set_title('EURUSD vs. 10Y yields')		
-			anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+			anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 			ax.add_artist(anchored_text)		
 		
 		elif symbol=='gbpusd':
@@ -826,7 +826,7 @@ def CurrencyVsYieldSpreads(start_date='2015-01-01', symbol='all'):
 			ax2.plot(gbpusd['spread'],label='Spread',color='red')
 			ax2.legend()
 			ax.set_title('GBPUSD vs. 10Y yields')		
-			anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+			anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 			ax.add_artist(anchored_text)			
 			
 		elif symbol=='usdjpy':
@@ -836,7 +836,7 @@ def CurrencyVsYieldSpreads(start_date='2015-01-01', symbol='all'):
 			ax2.plot(usdjpy['spread'],label='Spread',color='red')
 			ax2.legend()
 			ax.set_title('USDJPY vs. 10Y yields')		
-			anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+			anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 			ax.add_artist(anchored_text)
 
 		elif symbol=='eurjpy':
@@ -846,7 +846,7 @@ def CurrencyVsYieldSpreads(start_date='2015-01-01', symbol='all'):
 			ax2.plot(eurjpy['spread'],label='Spread',color='red')
 			ax2.legend()
 			ax.set_title('EURJPY vs. 10Y yields')		
-			anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+			anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 			ax.add_artist(anchored_text)			
 			
 		elif symbol=='audusd':
@@ -856,7 +856,7 @@ def CurrencyVsYieldSpreads(start_date='2015-01-01', symbol='all'):
 			ax2.plot(audusd['spread'],label='Spread',color='red')
 			ax2.legend()
 			ax.set_title('AUDUSD vs. 10Y yields')		
-			anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+			anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 			ax.add_artist(anchored_text)			
 			
 		elif symbol=='usdcad':
@@ -866,7 +866,7 @@ def CurrencyVsYieldSpreads(start_date='2015-01-01', symbol='all'):
 			ax2.plot(usdcad['spread'],label='Spread',color='red')
 			ax2.legend()
 			ax.set_title('USDCAD vs. 10Y yields')		
-			anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+			anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 			ax.add_artist(anchored_text)				
 			
 		elif symbol=='usdpln':
@@ -876,7 +876,7 @@ def CurrencyVsYieldSpreads(start_date='2015-01-01', symbol='all'):
 			ax2.plot(usdpln['spread'],label='Spread',color='red')
 			ax2.legend()
 			ax.set_title('USDPLN vs. 10Y yields')		
-			anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+			anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 			ax.add_artist(anchored_text)				
 			
 		elif symbol=='eurpln':
@@ -886,7 +886,7 @@ def CurrencyVsYieldSpreads(start_date='2015-01-01', symbol='all'):
 			ax2.plot(eurpln['spread'],label='Spread',color='red')
 			ax2.legend()
 			ax.set_title('EURPLN vs. 10Y yields')		
-			anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+			anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 			ax.add_artist(anchored_text)	
 
 		elif symbol=='eurgpb':
@@ -896,7 +896,7 @@ def CurrencyVsYieldSpreads(start_date='2015-01-01', symbol='all'):
 			ax2.plot(eurgpb['spread'],label='Spread',color='red')
 			ax2.legend()
 			ax.set_title('EURGPB vs. 10Y yields')		
-			anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+			anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 			ax.add_artist(anchored_text)		
 
 def NYSEMargin():
@@ -976,5 +976,59 @@ def NYSEMargin():
 	ax.legend(loc=4)
 	ax2.legend()
 
-	anchored_text = AnchoredText('                AlysSA v0.14b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+	anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
 	ax.add_artist(anchored_text)
+	
+def MargaRET(df, Column, Cut_off_date):
+
+	"""
+	MargaRET predicts future values based on correlation of actual quotes with historical ones.
+	
+	df: pandas DataFrame, Column: Column with data, Cut_off_date: cut-off date.
+	"""
+	
+	MargaRET
+
+	cut_off_index = df.index[df['Date'] == Cut_off_date][0]
+	
+	cut_data = pd.DataFrame()
+	for i in range(cut_off_index,len(df)):
+		cut_data.loc[i,Column] = df.loc[i,Column]
+		
+	cut_data.reset_index(inplace=True,drop=True)	
+	df = df[:cut_off_index]
+	
+	slices = pd.DataFrame()
+	for i in range(0,(len(df)-len(cut_data))):
+		for x in range(0,len(cut_data)):
+			slices.loc[x,i] = df.loc[i+x, Column]
+			
+	correlation_table = pd.DataFrame()		
+	for i in slices:
+		correlation_table.loc[i,'Correlation'] = cut_data[Column].corr(slices[i])
+		
+	max_corr = correlation_table['Correlation'].argmax()
+
+	final = pd.DataFrame()
+	final['Projection'] = df.loc[max_corr:(max_corr+2*len(cut_data)),Column]
+	final.reset_index(inplace=True,drop=True)
+	final[Column] = cut_data
+	
+	dates = df.loc[max_corr:(max_corr+2*len(cut_data)),'Date']
+	final.set_index(dates,inplace=True,drop=True)
+	
+	fig, ax = plt.subplots(figsize=(15,10))
+	ax.plot(final['Projection'],color='red',linestyle='--', alpha=0.5)
+	ax2 = ax.twinx()
+	ax2.plot(final[Column])
+
+	ax.set_title('{} projection (r = {}%)'.format(Column,"%.2f" % (correlation_table['Correlation'].max()*100)),fontsize=15)
+	ax.set_ylabel('Projection')
+	ax2.set_ylabel(Column)
+	
+	ax.legend(loc=2)
+	ax2.legend()
+	
+	anchored_text = AnchoredText('                AlysSA v0.15b\n  Algorithmic\'n\'Statistical Analysis\n       www.szymonnowak.com', loc=3)
+	ax.add_artist(anchored_text)
+
