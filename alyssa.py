@@ -1724,6 +1724,22 @@ def FindExtremes(df, column, first_rolling=360, second_rolling=180):
 				
 	extremes = []
 	extremes = lows + highs		
+	
+	low = pd.DataFrame()
+	high = pd.DataFrame()
+
+	for i in highs:
+		high.loc[i,'High'] = df.loc[i,'Date']
+	high.reset_index(inplace=True,drop=True)
+		
+	for i in lows:    
+		low.loc[i,'Low'] = df.loc[i,'Date']
+	low.reset_index(inplace=True,drop=True)    
+
+	final = pd.concat([high,low],axis=1)
+
 
 	df[column].plot(figsize=(15,12),markevery=extremes,style='s-')
 	df[[column,'mean','mean_2']].plot(figsize=(15,12))
+	
+	return(final)
