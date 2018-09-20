@@ -288,7 +288,7 @@ def Fed_rates():
 	import pickle
 	
 	infile = open('data/fed_rates','rb')
-	data = pickle.load(infile)
+	data = pd.read_pickle(infile)
 	infile.close()
 	return(data)
 	
@@ -1663,6 +1663,8 @@ def WIGIndicators(index='WIG'):
 		
 		
 def FindExtremes(df, column, first_rolling=360, second_rolling=180):
+
+	import matplotlib.dates as mdates
 	
 	df['mean'] = df[column].rolling(window=first_rolling).mean()
 	df['mean_2'] = df[column].rolling(window=second_rolling).mean()
@@ -1738,8 +1740,149 @@ def FindExtremes(df, column, first_rolling=360, second_rolling=180):
 
 	final = pd.concat([high,low],axis=1)
 
-
-	df[column].plot(figsize=(15,12),markevery=extremes,style='s-')
-	df[[column,'mean','mean_2']].plot(figsize=(15,12))
+	df.set_index('Date',inplace=True)
+	
+	myFmt = mdates.DateFormatter('%Y-%m')
+	years = mdates.YearLocator()   
+	months = mdates.MonthLocator()
+	
+	ax = df[column].plot(figsize=(15,12), markevery=extremes,style='s-')
+	
+	ax.xaxis.set_major_locator(years)
+	ax.xaxis.set_major_formatter(myFmt)
+	ax.xaxis.set_minor_locator(months)
+	
+	ax2 = df[[column,'mean','mean_2']].plot(figsize=(15,12))
+	
+	ax2.xaxis.set_major_locator(years)
+	ax2.xaxis.set_major_formatter(myFmt)
+	ax2.xaxis.set_minor_locator(months)
 	
 	return(final)
+	
+def ProjectHighsLows(df, column, df_dates, Low=True, High=True):
+
+	from datetime import timedelta
+	import numpy as np
+
+	high_delta = []
+	low_delta = []
+	
+	for i in range(1,len(df_dates)):
+		high_delta.append((df_dates.loc[i,'High']-df_dates.loc[i-1,'High']).days)
+		low_delta.append((df_dates.loc[i,'Low']-df_dates.loc[i-1,'Low']).days)
+	
+	if str(high_delta[-1]) == 'nan':
+		high_index = -2
+	else:
+		high_index = -1
+		
+	if str(low_delta[-1]) == 'nan':
+		low_index = -2
+	else:
+		low_index = -1   
+	
+	low_delta = [x for x in low_delta if str(x) != 'nan']    
+	high_delta = [x for x in high_delta if str(x) != 'nan'] 
+	
+	forecasted_low = df_dates.iloc[low_index,1] + timedelta(np.average(low_delta))
+	forecasted_high = df_dates.iloc[high_index,0] + timedelta(np.average(high_delta))
+	
+	if Low == True:
+		plt.axvline(forecasted_low, color='r', linestyle='-', lw=2)
+		plt.axvline((forecasted_low + timedelta(np.std(low_delta))), color='r', linestyle='--', lw=1)
+		plt.axvline((forecasted_low - timedelta(np.std(low_delta))), color='r', linestyle='--', lw=1)
+
+	if High == True:
+		plt.axvline(forecasted_high, color='g', linestyle='-', lw=2)
+		plt.axvline((forecasted_high + timedelta(np.std(high_delta))), color='g', linestyle='--', lw=1)
+		plt.axvline((forecasted_high - timedelta(np.std(high_delta))), color='g', linestyle='--', lw=1)
+
+	ax = df[column].plot(figsize=(15,12))
+	
+	col_names = ['High','Low']
+	final = pd.DataFrame(columns=col_names)
+	final.loc[0,'High'] = forecasted_high
+	final.loc[0,'Low'] = forecasted_low
+	
+	return(final)
+
+	
+
+def Paths(df,dates,column,Range_start, Range_end,):
+
+	from dateutil import parser
+	import math
+
+	indexes = []
+	
+# compare dates  
+	
+	for i in dates:
+		if df[df['Date']==i]['Date'].empty:
+			print('ERROR! {} is not in the df.'.format(i))
+		index = df[df['Date']==i].index
+		indexes.extend(index)
+
+# generate slices of data for selected dates        
+   
+	final = pd.DataFrame()
+	
+	for i in range(0,len(indexes)):
+		for x in range(Range_start,Range_end):
+			final.loc[x,i] = df.loc[indexes[i]+x][column]
+
+# rebase
+
+	for date in final:
+		for i in range(len(final)):
+			if i == abs(Range_start):
+				continue
+			final.iloc[i,date] = (final.iloc[i,date]/final.iloc[abs(Range_start),date]-1)*100
+		final.iloc[abs(Range_start),date] = 0    
+		
+# change column names to the dates
+
+	final = final.rename(columns=(lambda x:dates[x].date()))
+	
+# create df with min -> max values
+
+	path = pd.DataFrame()
+
+	for x in range(len(final.columns)):
+		for i in range(len(final)):
+			a = final.iloc[i,:]
+			b = a.sort_values()[x]
+			path.loc[i,x] = b
+			a = None
+			b = None 
+			
+# chart                
+	
+	fig, ax = plt.subplots(figsize=(15,12))
+	
+	ax.set_xlabel('Days')
+	ax.set_ylabel('[%]')
+	ax1 = ax.twinx()
+	ax1.set_ylim(ax.get_ylim())  
+	
+	if len(final.columns)%2 == 0: 
+	
+		for i in range(len(path.columns)):
+			path[i].plot(ax=ax, color='Red', linewidth=0)
+
+  
+
+		for i in range(0,math.trunc(len(final.columns)/2)):
+			ax.fill_between(path.index,path[i],path[2*math.trunc(len(final.columns)/2)-i-1],alpha=0.3,color='Pink')
+	
+	else:
+		
+		for i in [x for x in range(len(path.columns)) if x != math.trunc(len(path.columns)/2)]:
+			path[i].plot(ax=ax, color='Red', linewidth=0)
+
+		path[math.trunc(len(path.columns)/2)].plot(ax=ax, color='Red', linewidth=0.1)    # mid line
+			 
+
+		for i in [x for x in range(len(path.columns)) if x != math.trunc(len(path.columns)/2)]:
+			ax.fill_between(path.index,path[i],path[2*math.trunc(len(final.columns)/2)-i],alpha=0.3,color='Pink')
