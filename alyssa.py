@@ -1809,12 +1809,45 @@ def ProjectHighsLows(df, column, df_dates, Low=True, High=True):
 
 	
 
-def Paths(df,dates,column,Range_start, Range_end,):
+def Paths(df,dates,column,Range_start, Range_end, Plot_date):
 
-	from dateutil import parser
-	import math
+	indexes = [] 
 
-	indexes = []
+# whole operation for latest date
+
+	if Plot_date != '':
+		plot_date = parser.parse(Plot_date)
+		# plot_date = plot_date.date()
+		
+		if df[df['Date']==plot_date]['Date'].empty:
+			print('ERROR! Plot_date is not in the df.')
+		
+		index_plot_date = []
+		index_plot_datex = df[df['Date']==plot_date].index
+		index_plot_date.extend(index_plot_datex)
+		
+		
+		final_plot_date = pd.DataFrame()
+
+		for x in range(Range_start,Range_end):
+			try:
+				final_plot_date.loc[x,0] = df.loc[index_plot_date[0]+x][column]
+			except:
+				continue
+			
+		for i in range(len(final_plot_date)):
+			if i == abs(Range_start):
+				continue
+			try:
+				final_plot_date.iloc[i,0] = (final_plot_date.iloc[i,0]/final_plot_date.iloc[abs(Range_start),0]-1)*100
+			except:
+				continue
+				
+		for i in range(0,1):
+			try:
+				final_plot_date.iloc[abs(Range_start),0] = 0      
+			except:
+				continue
 	
 # compare dates  
 	
@@ -1845,6 +1878,7 @@ def Paths(df,dates,column,Range_start, Range_end,):
 
 	final = final.rename(columns=(lambda x:dates[x].date()))
 	
+	
 # create df with min -> max values
 
 	path = pd.DataFrame()
@@ -1857,14 +1891,15 @@ def Paths(df,dates,column,Range_start, Range_end,):
 			a = None
 			b = None 
 			
+	path.index = final.index
+
 # chart                
 	
 	fig, ax = plt.subplots(figsize=(15,12))
 	
 	ax.set_xlabel('Days')
 	ax.set_ylabel('[%]')
-	ax1 = ax.twinx()
-	ax1.set_ylim(ax.get_ylim())  
+	ax.set_xlim(Range_start,Range_end)
 	
 	if len(final.columns)%2 == 0: 
 	
@@ -1886,3 +1921,8 @@ def Paths(df,dates,column,Range_start, Range_end,):
 
 		for i in [x for x in range(len(path.columns)) if x != math.trunc(len(path.columns)/2)]:
 			ax.fill_between(path.index,path[i],path[2*math.trunc(len(final.columns)/2)-i],alpha=0.3,color='Pink')
+			
+	if Plot_date != '':
+		
+		final_plot_date[0].plot(ax=ax, color='Black', linewidth=2)
+    
