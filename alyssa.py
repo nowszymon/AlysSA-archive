@@ -1817,134 +1817,134 @@ def Paths(df,dates,column,Range_start, Range_end, Plot_date):
 	df: pandas DataFrame, dates: list with dates as datetime ([parser.parse(x) for x in dates] can be used to change str to datetime), column: column with data in df, Range_start: numbers of days before the date,  Range_end: numbers of days after the date, Plot_date: plot line with latest data, type date as str
 	"""
 
-    indexes = [] 
+	indexes = [] 
 
 # whole operation for latest date
 
-    if Plot_date != '':
-        plot_date = parser.parse(Plot_date)
-        # plot_date = plot_date.date()
-        
-        if df[df['Date']==plot_date]['Date'].empty:
-            print('ERROR! Plot_date is not in the df.')
-        
-        index_plot_date = []
-        index_plot_datex = df[df['Date']==plot_date].index
-        index_plot_date.extend(index_plot_datex)
-        
-        
-        final_plot_date = pd.DataFrame()
+	if Plot_date != '':
+		plot_date = parser.parse(Plot_date)
+		# plot_date = plot_date.date()
+		
+		if df[df['Date']==plot_date]['Date'].empty:
+			print('ERROR! Plot_date is not in the df.')
+		
+		index_plot_date = []
+		index_plot_datex = df[df['Date']==plot_date].index
+		index_plot_date.extend(index_plot_datex)
+		
+		
+		final_plot_date = pd.DataFrame()
 
-        for x in range(Range_start,Range_end):
-            try:
-                final_plot_date.loc[x,0] = df.loc[index_plot_date[0]+x][column]
-            except:
-                continue
-            
-        for i in range(len(final_plot_date)):
-            if i == abs(Range_start):
-                continue
-            try:
-                final_plot_date.iloc[i,0] = (final_plot_date.iloc[i,0]/final_plot_date.iloc[abs(Range_start),0]-1)*100
-            except:
-                continue
-                
-        for i in range(0,1):
-            try:
-                final_plot_date.iloc[abs(Range_start),0] = 0      
-            except:
-                continue
-    
+		for x in range(Range_start,Range_end):
+			try:
+				final_plot_date.loc[x,0] = df.loc[index_plot_date[0]+x][column]
+			except:
+				continue
+			
+		for i in range(len(final_plot_date)):
+			if i == abs(Range_start):
+				continue
+			try:
+				final_plot_date.iloc[i,0] = (final_plot_date.iloc[i,0]/final_plot_date.iloc[abs(Range_start),0]-1)*100
+			except:
+				continue
+				
+		for i in range(0,1):
+			try:
+				final_plot_date.iloc[abs(Range_start),0] = 0      
+			except:
+				continue
+	
 # compare dates  
-    
-    for i in dates:
-        if df[df['Date']==i]['Date'].empty:
-            print('ERROR! {} is not in the df.'.format(i))
-        index = df[df['Date']==i].index
-        indexes.extend(index)
+	
+	for i in dates:
+		if df[df['Date']==i]['Date'].empty:
+			print('ERROR! {} is not in the df.'.format(i))
+		index = df[df['Date']==i].index
+		indexes.extend(index)
 
 # generate slices of data for selected dates        
    
-    final = pd.DataFrame()
-    
-    for i in range(0,len(indexes)):
-        for x in range(Range_start,Range_end):
-            final.loc[x,i] = df.loc[indexes[i]+x][column]
+	final = pd.DataFrame()
+	
+	for i in range(0,len(indexes)):
+		for x in range(Range_start,Range_end):
+			final.loc[x,i] = df.loc[indexes[i]+x][column]
 
 # rebase
 
-    for date in final:
-        for i in range(len(final)):
-            if i == abs(Range_start):
-                continue
-            final.iloc[i,date] = (final.iloc[i,date]/final.iloc[abs(Range_start),date]-1)*100
-        final.iloc[abs(Range_start),date] = 0    
-        
+	for date in final:
+		for i in range(len(final)):
+			if i == abs(Range_start):
+				continue
+			final.iloc[i,date] = (final.iloc[i,date]/final.iloc[abs(Range_start),date]-1)*100
+		final.iloc[abs(Range_start),date] = 0    
+		
 # change column names to the dates
 
-    final = final.rename(columns=(lambda x:dates[x].date()))
-    
+	final = final.rename(columns=(lambda x:dates[x].date()))
+	
 # create df with min -> max values
 
-    path = pd.DataFrame()
+	path = pd.DataFrame()
 
-    for x in range(len(final.columns)):
-        for i in range(len(final)):
-            a = final.iloc[i,:]
-            b = a.sort_values()[x]
-            path.loc[i,x] = b
-            a = None
-            b = None 
-            
-    path.index = final.index
+	for x in range(len(final.columns)):
+		for i in range(len(final)):
+			a = final.iloc[i,:]
+			b = a.sort_values()[x]
+			path.loc[i,x] = b
+			a = None
+			b = None 
+			
+	path.index = final.index
 
 # chart                
-    
-    fig, ax = plt.subplots(figsize=(15,12))
-    
-    ax.set_xlabel('Days')
-    ax.set_ylabel('[%]')
-    ax.set_xlim(Range_start,Range_end)
+	
+	fig, ax = plt.subplots(figsize=(15,12))
+	
+	ax.set_xlabel('Days')
+	ax.set_ylabel('[%]')
+	ax.set_xlim(Range_start,Range_end)
 
-    if len(final.columns)%2 == 0: 
-    
-        for i in range(len(path.columns)):
-            path[i].plot(ax=ax, color='Red', linewidth=0)
+	if len(final.columns)%2 == 0: 
+	
+		for i in range(len(path.columns)):
+			path[i].plot(ax=ax, color='Red', linewidth=0)
 
   
 
-        for i in range(0,math.trunc(len(final.columns)/2)):
-            ax.fill_between(path.index,path[i],path[2*math.trunc(len(final.columns)/2)-i-1],alpha=0.3,color='Pink')
-    
-    else:
-        
-        for i in [x for x in range(len(path.columns)) if x != math.trunc(len(path.columns)/2)]:
-            path[i].plot(ax=ax, color='Red', linewidth=0)
+		for i in range(0,math.trunc(len(final.columns)/2)):
+			ax.fill_between(path.index,path[i],path[2*math.trunc(len(final.columns)/2)-i-1],alpha=0.3,color='Pink')
+	
+	else:
+		
+		for i in [x for x in range(len(path.columns)) if x != math.trunc(len(path.columns)/2)]:
+			path[i].plot(ax=ax, color='Red', linewidth=0)
 
-        path[math.trunc(len(path.columns)/2)].plot(ax=ax, color='Red', linewidth=0.1)    # mid line
-             
+		path[math.trunc(len(path.columns)/2)].plot(ax=ax, color='Red', linewidth=0.1)    # mid line
+			 
 
-        for i in [x for x in range(len(path.columns)) if x != math.trunc(len(path.columns)/2)]:
-            ax.fill_between(path.index,path[i],path[2*math.trunc(len(final.columns)/2)-i],alpha=0.3,color='Pink')
-            
-    if Plot_date != '':
-        final_plot_date[0].plot(ax=ax, color='Black', linewidth=2)
-    
-    plt.grid(linestyle='-.',linewidth=0.3)  
-    
-    fig2, ax2 = plt.subplots(figsize=(15,12))
-    
-    ax2.set_xlabel('Days')
-    ax2.set_ylabel('[%]')
-    ax2.set_xlim(Range_start,Range_end)
-    final.plot(ax=ax2)
-    
-        
-    ax2.yaxis.grid(True, which='major')
-    ax2.yaxis.grid(True, which='minor')
-    
-    if Plot_date != '':
-            final_plot_date[0].plot(ax=ax2, color='Black', linewidth=3)
-            
-    plt.grid(linestyle='-.',linewidth=0.3)
+		for i in [x for x in range(len(path.columns)) if x != math.trunc(len(path.columns)/2)]:
+			ax.fill_between(path.index,path[i],path[2*math.trunc(len(final.columns)/2)-i],alpha=0.3,color='Pink')
+			
+	if Plot_date != '':
+		final_plot_date[0].plot(ax=ax, color='Black', linewidth=2)
+	
+	plt.grid(linestyle='-.',linewidth=0.3)  
+	
+	fig2, ax2 = plt.subplots(figsize=(15,12))
+	
+	ax2.set_xlabel('Days')
+	ax2.set_ylabel('[%]')
+	ax2.set_xlim(Range_start,Range_end)
+	final.plot(ax=ax2)
+	
+		
+	ax2.yaxis.grid(True, which='major')
+	ax2.yaxis.grid(True, which='minor')
+	
+	if Plot_date != '':
+			final_plot_date[0].plot(ax=ax2, color='Black', linewidth=3)
+			
+	plt.grid(linestyle='-.',linewidth=0.3)
     
